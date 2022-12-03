@@ -5,7 +5,7 @@ namespace MyLocalPages.API
 {
     public class MyLocalPagesDataStore
     {
-        public static MyLocalPagesDataStore Current { get; } = new MyLocalPagesDataStore();
+        //public static MyLocalPagesDataStore Current { get; } = new MyLocalPagesDataStore();
         public List<BusinessDirectoryDTO> BusinessDirectories { get; set; }
 
         public MyLocalPagesDataStore()

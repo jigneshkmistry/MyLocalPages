@@ -7,3 +7,8 @@
 /MyLocalPages.API/MyLocalPages.API/bin/Debug/net6.0
 /MyLocalPages.API/MyLocalPages.API/obj
 /MyLocalPages.API/.vs
+/MyLocalPages.API/MyLocalPages.API/bin/Release/net6.0
+/MyLocalPages.API/MyLocalPages.API/logs
+/MyLocalPages.API/MyLocalPages.DTO/bin/Release/net6.0
+/MyLocalPages.API/MyLocalPages.Services/bin
+/MyLocalPages.API/MyLocalPages.Services/obj

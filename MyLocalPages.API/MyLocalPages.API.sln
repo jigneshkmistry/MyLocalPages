@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLocalPages.API", "MyLocalPages.API\MyLocalPages.API.csproj", "{95FC5EE0-359D-4963-B964-072607F8DA0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLocalPages.API", "MyLocalPages.API\MyLocalPages.API.csproj", "{95FC5EE0-359D-4963-B964-072607F8DA0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLocalPages.DTO", "MyLocalPages.DTO\MyLocalPages.DTO.csproj", "{7E65248F-BD49-4D08-A9A6-560341832338}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLocalPages.DTO", "MyLocalPages.DTO\MyLocalPages.DTO.csproj", "{7E65248F-BD49-4D08-A9A6-560341832338}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLocalPages.Services", "MyLocalPages.Services\MyLocalPages.Services.csproj", "{49190B4D-9680-4CB8-B200-A948A9723ED7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{7E65248F-BD49-4D08-A9A6-560341832338}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E65248F-BD49-4D08-A9A6-560341832338}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E65248F-BD49-4D08-A9A6-560341832338}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49190B4D-9680-4CB8-B200-A948A9723ED7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49190B4D-9680-4CB8-B200-A948A9723ED7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49190B4D-9680-4CB8-B200-A948A9723ED7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49190B4D-9680-4CB8-B200-A948A9723ED7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

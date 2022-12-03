@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MyLocalPages.DTO.BusinessCategory;
 using MyLocalPages.DTO.BusinessDirectory;
+using MyLocalPages.Services.BusinessDirectory;
 using System.IO;
 
 namespace MyLocalPages.API.Controllers
@@ -13,13 +15,21 @@ namespace MyLocalPages.API.Controllers
 
         #region PRIVATE MEMBERS
 
+        private readonly ILogger<BusinessDirectoriesController> _logger;
+        private readonly IBusinessDirectoryService _businessDirectoryService;
+        private readonly MyLocalPagesDataStore _myLocalPagesDataStore;
+
         #endregion
 
         #region CONSTRUCTOR
 
-        public BusinessDirectoriesController()
+        public BusinessDirectoriesController(ILogger<BusinessDirectoriesController> logger,
+            IBusinessDirectoryService businessDirectoryService,
+            MyLocalPagesDataStore myLocalPagesDataStore)
         {
-
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _businessDirectoryService = businessDirectoryService ?? throw new ArgumentNullException(nameof(businessDirectoryService));
+            _myLocalPagesDataStore = myLocalPagesDataStore;
         }
 
         #endregion
@@ -33,7 +43,8 @@ namespace MyLocalPages.API.Controllers
         /// <returns>List of business directories</returns>
         public ActionResult<IEnumerable<DirectoryCategoryDTO>> GetBusinessDirectories()
         {
-            return Ok(MyLocalPagesDataStore.Current.BusinessDirectories);
+            _logger.LogInformation("GetBusinessDirectories called : ");
+            return Ok(_myLocalPagesDataStore.BusinessDirectories);
         }
 
         [HttpGet]
@@ -45,10 +56,11 @@ namespace MyLocalPages.API.Controllers
         /// <returns></returns>
         public ActionResult<DirectoryCategoryDTO> GetBusinessDirectory(string id)
         {
-            var category = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == id);
+            var category = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
 
             if (category == null)
             {
+                _logger.LogInformation($"Business category with id {id} is not found: ");
                 return NotFound();
             }
 
@@ -73,7 +85,7 @@ namespace MyLocalPages.API.Controllers
                 Name = businessDirectoryForCreationDTO.Name
             };
 
-            MyLocalPagesDataStore.Current.BusinessDirectories.Add(businessDirectory);
+            _myLocalPagesDataStore.BusinessDirectories.Add(businessDirectory);
             
             return CreatedAtRoute("GetBusinessDirectory", new { businessDirectory.Id }, businessDirectory);
         }
@@ -91,7 +103,7 @@ namespace MyLocalPages.API.Controllers
         /// <returns>BusinessDirectoryResposne Model</returns>
         public ActionResult UpdateBusinessDirectory(string id, BusinessDirectoryForUpdateDTO businessDirectoryForUpdateDTO)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == id);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
 
             if (directory == null)
             {
@@ -116,7 +128,7 @@ namespace MyLocalPages.API.Controllers
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
         public ActionResult PartiallyUpdateBusinessDirectory(string id, JsonPatchDocument<BusinessDirectoryForUpdateDTO> patchDocument)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == id);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
 
             if (directory == null)
             {
@@ -147,7 +159,6 @@ namespace MyLocalPages.API.Controllers
 
         #endregion
 
-
         #region HTTPDELETE
 
         /// <summary>
@@ -158,18 +169,19 @@ namespace MyLocalPages.API.Controllers
         [HttpDelete("{id}", Name = "DeleteBusinessDirectory")]
         public ActionResult DeleteBusinessDirectory(string id)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == id);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
 
             if (directory == null)
             {
                 return NotFound();
             }
 
-            MyLocalPagesDataStore.Current.BusinessDirectories.Remove(directory);
+            _myLocalPagesDataStore.BusinessDirectories.Remove(directory);
 
             return NoContent();
         }
 
         #endregion
+
     }
 }

@@ -1,6 +1,17 @@
 using Microsoft.AspNetCore.StaticFiles;
+using MyLocalPages.API;
+using MyLocalPages.Services.BusinessDirectory;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.File("logs/mylocalpagesinfo.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 
@@ -15,6 +26,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
+builder.Services.AddSingleton<MyLocalPagesDataStore>();
+builder.Services.AddScoped<IBusinessDirectoryService, BusinessDirectoryService>();
 
 var app = builder.Build();
 

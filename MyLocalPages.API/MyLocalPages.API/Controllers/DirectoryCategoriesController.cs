@@ -13,20 +13,15 @@ namespace MyLocalPages.API.Controllers
 
         #region PRIVATE MEMBERS
 
-        private List<DirectoryCategoryDTO> subCategories = new List<DirectoryCategoryDTO>()
-            {
-                new DirectoryCategoryDTO { Name = "Accommodation, Travel & Tours", Id = "1" },
-                new  DirectoryCategoryDTO {Name =  "Animals & Pets", Id = "2" },
-                new  DirectoryCategoryDTO { Name = "Arts, Crafts & Collectables",Id = "3" }
-            };
+        private readonly MyLocalPagesDataStore _myLocalPagesDataStore;
 
         #endregion
 
         #region CONSTRUCTOR
 
-        public DirectoryCategoriesController()
+        public DirectoryCategoriesController(MyLocalPagesDataStore myLocalPagesDataStore)
         {
-
+            _myLocalPagesDataStore = myLocalPagesDataStore;
         }
 
         #endregion
@@ -40,7 +35,7 @@ namespace MyLocalPages.API.Controllers
         /// <returns>List of business sub categories</returns>
         public ActionResult<IEnumerable<DirectoryCategoryDTO>> GetDirectoryCategories(string directoryId)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
             if (directory == null)
             {
@@ -59,7 +54,7 @@ namespace MyLocalPages.API.Controllers
         /// <returns></returns>
         public ActionResult<DirectoryCategoryDTO> GetBusinessCategory(string directoryId, string id)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
             if (directory == null)
             {
@@ -89,7 +84,7 @@ namespace MyLocalPages.API.Controllers
         public ActionResult<DirectoryCategoryDTO> CreateBusinessDirectoryCategory(string directoryId, DirectoryCategoryForCreationDTO directoryCategoryForCreationDTO)
         {
 
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
             if (directory == null)
             {
@@ -120,7 +115,7 @@ namespace MyLocalPages.API.Controllers
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
         public ActionResult UpdateBusinessDirectoryCategory(string directoryId,string id, DirectoryCategoryForUpdateDTO directoryCategoryForUpdateDTO)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
             if (directory == null)
             {
@@ -152,7 +147,7 @@ namespace MyLocalPages.API.Controllers
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
         public ActionResult PartiallyUpdateBusinessDirectoryCategory(string directoryId, string id, JsonPatchDocument<DirectoryCategoryForUpdateDTO> patchDocument)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
             if (directory == null)
             {
@@ -190,7 +185,6 @@ namespace MyLocalPages.API.Controllers
 
         #endregion
 
-
         #region HTTPDELETE
 
         /// <summary>
@@ -202,7 +196,7 @@ namespace MyLocalPages.API.Controllers
         [HttpDelete("{id}",Name = "DeleteBusinessDirectoryCategory")]
         public ActionResult DeleteBusinessDirectoryCategory(string directoryId, string id)
         {
-            var directory = MyLocalPagesDataStore.Current.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
             if (directory == null)
             {
