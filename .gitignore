@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/MyLocalPages.API/MyLocalPages.DTO/bin/Debug/net6.0
+/MyLocalPages.API/MyLocalPages.DTO/obj
+/MyLocalPages.API/MyLocalPages.API/bin/Debug/net6.0
+/MyLocalPages.API/MyLocalPages.API/obj
+/MyLocalPages.API/.vs
