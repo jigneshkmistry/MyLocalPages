@@ -12,3 +12,6 @@
 /MyLocalPages.API/MyLocalPages.DTO/bin/Release/net6.0
 /MyLocalPages.API/MyLocalPages.Services/bin
 /MyLocalPages.API/MyLocalPages.Services/obj
+/MyLocalPages.API/MyLocalPages.Domain/bin/Debug/net6.0
+/MyLocalPages.API/MyLocalPages.Domain/obj
+/MyLocalPages.API/MyLocalPages.API/MyLocalPages.db
