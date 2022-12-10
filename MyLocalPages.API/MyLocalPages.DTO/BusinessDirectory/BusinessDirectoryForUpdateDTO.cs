@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MyLocalPages.DTO.BusinessDirectory
+namespace MyLocalPages.DTO
 {
     public class BusinessDirectoryForUpdateDTO
     {

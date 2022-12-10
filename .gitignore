@@ -15,3 +15,8 @@
 /MyLocalPages.API/MyLocalPages.Domain/bin/Debug/net6.0
 /MyLocalPages.API/MyLocalPages.Domain/obj
 /MyLocalPages.API/MyLocalPages.API/MyLocalPages.db
+/MyLocalPages.API/MyLocalPages.Repository/bin/Debug/net6.0
+/MyLocalPages.API/MyLocalPages.Repository/obj/Debug/net6.0
+/MyLocalPages.API/MyLocalPages.Repository/obj
+/MyLocalPages.API/MyLocalPages.API/MyLocalPages.db-wal
+/MyLocalPages.API/MyLocalPages.API/MyLocalPages.db-shm

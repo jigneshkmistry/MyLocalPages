@@ -1,6 +1,6 @@
-﻿using MyLocalPages.DTO.BusinessCategory;
+﻿using MyLocalPages.DTO;
 
-namespace MyLocalPages.DTO.BusinessDirectory
+namespace MyLocalPages.DTO
 {
     public class BusinessDirectoryDTO
     {

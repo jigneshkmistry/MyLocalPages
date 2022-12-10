@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using MyLocalPages.DTO.BusinessCategory;
-using MyLocalPages.DTO.BusinessDirectory;
-using System.Xml.XPath;
+using MyLocalPages.Domain;
+using MyLocalPages.DTO;
+using MyLocalPages.Services;
 
 namespace MyLocalPages.API.Controllers
 {
@@ -13,15 +14,24 @@ namespace MyLocalPages.API.Controllers
 
         #region PRIVATE MEMBERS
 
-        private readonly MyLocalPagesDataStore _myLocalPagesDataStore;
+        private readonly ILogger<DirectoryCategoriesController> _logger;
+        private readonly IBusinessDirectoryService _businessDirectoryService;
+        private readonly IDirectoryCategoryService _directoryCategoryService;
+        private readonly IMapper _mapper;
 
         #endregion
 
         #region CONSTRUCTOR
 
-        public DirectoryCategoriesController(MyLocalPagesDataStore myLocalPagesDataStore)
+        public DirectoryCategoriesController(ILogger<DirectoryCategoriesController> logger,
+             IDirectoryCategoryService directoryCategoryService,
+            IBusinessDirectoryService businessDirectoryService,
+            IMapper mapper)
         {
-            _myLocalPagesDataStore = myLocalPagesDataStore;
+            _mapper = mapper;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _businessDirectoryService = businessDirectoryService ?? throw new ArgumentNullException(nameof(businessDirectoryService));
+            _directoryCategoryService = directoryCategoryService ?? throw new ArgumentNullException(nameof(directoryCategoryService));           
         }
 
         #endregion
@@ -33,16 +43,16 @@ namespace MyLocalPages.API.Controllers
         /// Gets the sub categories for a business category  
         /// </summary>
         /// <returns>List of business sub categories</returns>
-        public ActionResult<IEnumerable<DirectoryCategoryDTO>> GetDirectoryCategories(string directoryId)
+        public async Task<ActionResult<IEnumerable<DirectoryCategoryDTO>>> GetDirectoryCategories(Guid directoryId)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
-
-            if (directory == null)
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            return Ok(directory.Categories);
+            var categories = _mapper.Map<List<DirectoryCategoryDTO>>((await _directoryCategoryService.GetAllEntitiesAsync()).Where(x => x.BusinessDirectoryId == directoryId));
+
+            return Ok(categories);
         }
 
         [HttpGet]
@@ -52,16 +62,15 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="id">unique identifier for the sub category</param>
         /// <returns></returns>
-        public ActionResult<DirectoryCategoryDTO> GetBusinessCategory(string directoryId, string id)
+        public async Task<ActionResult<DirectoryCategoryDTO>> GetBusinessCategory(Guid directoryId, Guid id)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
 
-            if (directory == null)
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var category = directory.Categories.FirstOrDefault(x => x.Id == id);
+            var category = _mapper.Map<DirectoryCategoryDTO>(await _directoryCategoryService.GetEntityByIdAsync(id));
 
             if (category == null)
             {
@@ -81,25 +90,18 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="businessDirectory">BusinessDirectoryCategory creation model</param>
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public ActionResult<DirectoryCategoryDTO> CreateBusinessDirectoryCategory(string directoryId, DirectoryCategoryForCreationDTO directoryCategoryForCreationDTO)
+        public async Task<ActionResult<DirectoryCategoryDTO>> CreateBusinessDirectoryCategory(Guid directoryId,
+            DirectoryCategoryForCreationDTO directoryCategoryForCreationDTO)
         {
-
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
-
-            if (directory == null)
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var directoryCategoryDTO = new DirectoryCategoryDTO()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = directoryCategoryForCreationDTO.Name
-            };
-
-            directory.Categories.Add(directoryCategoryDTO);
-
-            return CreatedAtRoute("GetBusinessCategory", new { directoryId, directoryCategoryDTO.Id }, directoryCategoryDTO);
+            directoryCategoryForCreationDTO.BusinessDirectoryId = directoryId;
+            var categoryToReturn = await _directoryCategoryService.
+                    CreateEntityAsync<DirectoryCategoryDTO, DirectoryCategoryForCreationDTO>(directoryCategoryForCreationDTO);
+            return CreatedAtRoute("GetBusinessCategory", new { directoryId, categoryToReturn.Id }, categoryToReturn);
         }
 
         #endregion
@@ -113,23 +115,19 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="businessDirectory">BusinessDirectoryCategory update model</param>
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public ActionResult UpdateBusinessDirectoryCategory(string directoryId,string id, DirectoryCategoryForUpdateDTO directoryCategoryForUpdateDTO)
+        public async Task<ActionResult> UpdateBusinessDirectoryCategory(Guid directoryId, Guid id, DirectoryCategoryForUpdateDTO directoryCategoryForUpdateDTO)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
-
-            if (directory == null)
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var category = directory.Categories.FirstOrDefault(x => x.Id == id);
-
-            if (category == null)
+            if (!await _directoryCategoryService.ExistAsync(x => x.Id == id))
             {
                 return NotFound();
             }
 
-            category.Name = directoryCategoryForUpdateDTO.Name;
+            await _directoryCategoryService.UpdateEntityAsync(id, directoryCategoryForUpdateDTO);
 
             return NoContent();
         }
@@ -145,40 +143,40 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="businessDirectory">BusinessDirectoryCategory update model</param>
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public ActionResult PartiallyUpdateBusinessDirectoryCategory(string directoryId, string id, JsonPatchDocument<DirectoryCategoryForUpdateDTO> patchDocument)
+        public async Task<ActionResult> PartiallyUpdateBusinessDirectoryCategory(Guid directoryId, Guid id, JsonPatchDocument<DirectoryCategoryForUpdateDTO> patchDocument)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
+            DirectoryCategoryForUpdateDTO dto = new DirectoryCategoryForUpdateDTO();
+            DirectoryCategory category = new DirectoryCategory();
 
-            if (directory == null)
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var category = directory.Categories.FirstOrDefault(x => x.Id == id);
-
-            if (category == null)
+            if (!await _directoryCategoryService.ExistAsync(x => x.Id == id))
             {
                 return NotFound();
             }
 
-            DirectoryCategoryForUpdateDTO directoryCategoryToPatch = new DirectoryCategoryForUpdateDTO()
-            {
-                Name = category.Name
-            };
-
-            patchDocument.ApplyTo(directoryCategoryToPatch, ModelState);
+            patchDocument.ApplyTo(dto, ModelState);
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (!TryValidateModel(directoryCategoryToPatch))
+            if (!TryValidateModel(dto))
             {
                 return BadRequest(ModelState);
             }
 
-            category.Name = directoryCategoryToPatch.Name;
+            //map the changes from dto to entity.
+            _mapper.Map(dto, category);
+
+            category.Id = id;
+
+            //partially update the changes to the db. 
+            await _directoryCategoryService.UpdatePartialEntityAsync(category, patchDocument);
 
             return NoContent();
         }
@@ -193,25 +191,25 @@ namespace MyLocalPages.API.Controllers
         /// <param name="directoryId">Unique identifier business directory</param>
         /// <param name="id">Unique indetifier for directory category</param>
         /// <returns></returns>
-        [HttpDelete("{id}",Name = "DeleteBusinessDirectoryCategory")]
-        public ActionResult DeleteBusinessDirectoryCategory(string directoryId, string id)
+        [HttpDelete("{id}", Name = "DeleteBusinessDirectoryCategory")]
+        public async Task<ActionResult> DeleteBusinessDirectoryCategory(Guid directoryId, Guid id)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == directoryId);
-
-            if (directory == null)
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var category = directory.Categories.FirstOrDefault(x => x.Id == id);
-
-            if (category == null)
+            if (await _directoryCategoryService.ExistAsync(x => x.Id == id))
             {
+                //delete the event from the db.
+                await _directoryCategoryService.DeleteEntityAsync(id);
+            }
+            else
+            {
+                //if event doesn't exists then returns not found.
                 return NotFound();
             }
 
-            directory.Categories.Remove(category);
-            
             return NoContent();
         }
 

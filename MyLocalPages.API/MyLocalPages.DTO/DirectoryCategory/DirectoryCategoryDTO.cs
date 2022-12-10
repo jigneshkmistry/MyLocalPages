@@ -1,4 +1,4 @@
-﻿namespace MyLocalPages.DTO.BusinessCategory
+﻿namespace MyLocalPages.DTO
 {
     public class DirectoryCategoryDTO
     {

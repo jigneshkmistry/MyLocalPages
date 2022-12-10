@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MyLocalPages.Domain.Entities;
+using MyLocalPages.Domain;
 
-namespace MyLocalPages.Domain.DBContext
+namespace MyLocalPages.Domain
 {
     public class MyLocalPagesContext : DbContext
     {

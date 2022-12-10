@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLocalPages.API", "MyLocal
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLocalPages.DTO", "MyLocalPages.DTO\MyLocalPages.DTO.csproj", "{7E65248F-BD49-4D08-A9A6-560341832338}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLocalPages.Services", "MyLocalPages.Services\MyLocalPages.Services.csproj", "{49190B4D-9680-4CB8-B200-A948A9723ED7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLocalPages.Services", "MyLocalPages.Services\MyLocalPages.Services.csproj", "{49190B4D-9680-4CB8-B200-A948A9723ED7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLocalPages.Domain", "MyLocalPages.Domain\MyLocalPages.Domain.csproj", "{6E06A9CD-0DBE-4CB5-B177-40270AC7C136}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLocalPages.Domain", "MyLocalPages.Domain\MyLocalPages.Domain.csproj", "{6E06A9CD-0DBE-4CB5-B177-40270AC7C136}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLocalPages.Repository", "MyLocalPages.Repository\MyLocalPages.Repository.csproj", "{F9DD309B-F04C-4F1B-AF7B-701946156ED7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{6E06A9CD-0DBE-4CB5-B177-40270AC7C136}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E06A9CD-0DBE-4CB5-B177-40270AC7C136}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E06A9CD-0DBE-4CB5-B177-40270AC7C136}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9DD309B-F04C-4F1B-AF7B-701946156ED7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9DD309B-F04C-4F1B-AF7B-701946156ED7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9DD309B-F04C-4F1B-AF7B-701946156ED7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9DD309B-F04C-4F1B-AF7B-701946156ED7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

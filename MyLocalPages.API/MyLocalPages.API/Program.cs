@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using MyLocalPages.API;
-using MyLocalPages.Domain.DBContext;
-using MyLocalPages.Services.BusinessDirectory;
+using MyLocalPages.Domain;
+using MyLocalPages.Repository;
+using MyLocalPages.Services;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -31,9 +32,14 @@ builder.Services.AddDbContext<MyLocalPagesContext>(
     dbContextOptions => dbContextOptions.UseSqlite(
         builder.Configuration["ConnectionStrings:MyLocalPagesDBConnectionString"], b => b.MigrationsAssembly("MyLocalPages.Domain")));
 
-builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
-builder.Services.AddSingleton<MyLocalPagesDataStore>();
+builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+builder.Services.AddScoped<IBusinessDirectoryRepository, BusinessDirectoryRepository>();
 builder.Services.AddScoped<IBusinessDirectoryService, BusinessDirectoryService>();
+builder.Services.AddScoped<IDirectoryCategoryRepository, DirectoryCategoryRepository>();
+builder.Services.AddScoped<IDirectoryCategoryService, DirectoryCategoryService>();
+builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 

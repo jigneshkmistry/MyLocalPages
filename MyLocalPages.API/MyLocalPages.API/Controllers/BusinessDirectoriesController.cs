@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using MyLocalPages.DTO.BusinessCategory;
-using MyLocalPages.DTO.BusinessDirectory;
-using MyLocalPages.Services.BusinessDirectory;
-using System.IO;
+using MyLocalPages.Domain;
+using MyLocalPages.DTO;
+using MyLocalPages.Services;
 
 namespace MyLocalPages.API.Controllers
 {
@@ -17,7 +16,7 @@ namespace MyLocalPages.API.Controllers
 
         private readonly ILogger<BusinessDirectoriesController> _logger;
         private readonly IBusinessDirectoryService _businessDirectoryService;
-        private readonly MyLocalPagesDataStore _myLocalPagesDataStore;
+        private readonly IMapper _mapper;
 
         #endregion
 
@@ -25,11 +24,11 @@ namespace MyLocalPages.API.Controllers
 
         public BusinessDirectoriesController(ILogger<BusinessDirectoriesController> logger,
             IBusinessDirectoryService businessDirectoryService,
-            MyLocalPagesDataStore myLocalPagesDataStore)
+            IMapper mapper)
         {
+            _mapper = mapper;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _businessDirectoryService = businessDirectoryService ?? throw new ArgumentNullException(nameof(businessDirectoryService));
-            _myLocalPagesDataStore = myLocalPagesDataStore;
         }
 
         #endregion
@@ -41,10 +40,10 @@ namespace MyLocalPages.API.Controllers
         /// Gets the business directories 
         /// </summary>
         /// <returns>List of business directories</returns>
-        public ActionResult<IEnumerable<DirectoryCategoryDTO>> GetBusinessDirectories()
+        public async Task<ActionResult<IEnumerable<BusinessDirectory>>> GetBusinessDirectories()
         {
             _logger.LogInformation("GetBusinessDirectories called : ");
-            return Ok(_myLocalPagesDataStore.BusinessDirectories);
+            return Ok(await _businessDirectoryService.GetAllEntitiesAsync());
         }
 
         [HttpGet]
@@ -54,9 +53,9 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="id">unique identifier for the category</param>
         /// <returns></returns>
-        public ActionResult<DirectoryCategoryDTO> GetBusinessDirectory(string id)
+        public async Task<ActionResult<DirectoryCategoryDTO>> GetBusinessDirectory(Guid id)
         {
-            var category = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
+            var category = _mapper.Map<BusinessDirectoryDTO>(await _businessDirectoryService.GetEntityByIdAsync(id));
 
             if (category == null)
             {
@@ -77,17 +76,10 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="businessDirectory">BusinessDirectory creation model</param>
         /// <returns>BusinessDirectoryResposne Model</returns>
-        public ActionResult<BusinessDirectoryDTO> CreateBusinessDirectory(BusinessDirectoryForCreationDTO businessDirectoryForCreationDTO)
+        public async Task<ActionResult<BusinessDirectoryDTO>> CreateBusinessDirectory(BusinessDirectoryForCreationDTO businessDirectoryForCreationDTO)
         {
-            var businessDirectory = new BusinessDirectoryDTO()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = businessDirectoryForCreationDTO.Name
-            };
-
-            _myLocalPagesDataStore.BusinessDirectories.Add(businessDirectory);
-            
-            return CreatedAtRoute("GetBusinessDirectory", new { businessDirectory.Id }, businessDirectory);
+            var directoryToReturn = await _businessDirectoryService.CreateEntityAsync<BusinessDirectoryDTO, BusinessDirectoryForCreationDTO>(businessDirectoryForCreationDTO);
+            return CreatedAtRoute("GetBusinessDirectory", new { directoryToReturn.Id }, directoryToReturn);
         }
 
         #endregion
@@ -101,16 +93,17 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="businessDirectory">BusinessDirectory update model</param>
         /// <returns>BusinessDirectoryResposne Model</returns>
-        public ActionResult UpdateBusinessDirectory(string id, BusinessDirectoryForUpdateDTO businessDirectoryForUpdateDTO)
+        public async Task<ActionResult> UpdateBusinessDirectory(Guid id, BusinessDirectoryForUpdateDTO businessDirectoryForUpdateDTO)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
-
-            if (directory == null)
+            //if show not found
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == id))
             {
+                //then return not found response.
                 return NotFound();
             }
 
-            directory.Name = businessDirectoryForUpdateDTO.Name;
+            //Update an entity.
+            await _businessDirectoryService.UpdateEntityAsync(id, businessDirectoryForUpdateDTO);
 
             return NoContent();
         }
@@ -126,33 +119,39 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="businessDirectory">BusinessDirectoryCategory update model</param>
         /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public ActionResult PartiallyUpdateBusinessDirectory(string id, JsonPatchDocument<BusinessDirectoryForUpdateDTO> patchDocument)
+        public async Task<ActionResult> PartiallyUpdateBusinessDirectory(Guid id, JsonPatchDocument<BusinessDirectoryForUpdateDTO> patchDocument)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
+            BusinessDirectoryForUpdateDTO dto = new BusinessDirectoryForUpdateDTO();
+            BusinessDirectory businessDirectory = new BusinessDirectory();
 
-            if (directory == null)
+            //if show not found
+            if (!await _businessDirectoryService.ExistAsync(x => x.Id == id))
             {
+                //then return not found response.
                 return NotFound();
             }
 
-            BusinessDirectoryForUpdateDTO directoryToPatch = new BusinessDirectoryForUpdateDTO()
-            {
-                Name = directory.Name
-            };
-
-            patchDocument.ApplyTo(directoryToPatch, ModelState);
+            //apply the patch changes to the dto. 
+            patchDocument.ApplyTo(dto, ModelState);
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (!TryValidateModel(directoryToPatch))
+            if (!TryValidateModel(dto))
             {
                 return BadRequest(ModelState);
             }
 
-            directory.Name = directoryToPatch.Name;
+            //map the chnages from dto to entity.
+            _mapper.Map(dto, businessDirectory);
+
+            //set the Id for the show model.
+            businessDirectory.Id = id;
+
+            //partially update the chnages to the db. 
+            await _businessDirectoryService.UpdatePartialEntityAsync(businessDirectory, patchDocument);
 
             return NoContent();
         }
@@ -167,17 +166,21 @@ namespace MyLocalPages.API.Controllers
         /// <param name="id">Unique indetifier for business directory</param>
         /// <returns></returns>
         [HttpDelete("{id}", Name = "DeleteBusinessDirectory")]
-        public ActionResult DeleteBusinessDirectory(string id)
+        public async Task<ActionResult> DeleteBusinessDirectory(Guid id)
         {
-            var directory = _myLocalPagesDataStore.BusinessDirectories.FirstOrDefault(x => x.Id == id);
-
-            if (directory == null)
+            //if the event exists
+            if (await _businessDirectoryService.ExistAsync(x => x.Id == id))
             {
+                //delete the event from the db.
+                await _businessDirectoryService.DeleteEntityAsync(id);
+            }
+            else
+            {
+                //if event doesn't exists then returns not found.
                 return NotFound();
             }
 
-            _myLocalPagesDataStore.BusinessDirectories.Remove(directory);
-
+            //return the response.
             return NoContent();
         }
 

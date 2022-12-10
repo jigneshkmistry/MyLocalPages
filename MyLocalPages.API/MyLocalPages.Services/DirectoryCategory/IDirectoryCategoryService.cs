@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MyLocalPages.Services
 {
-    public interface IBusinessDirectoryService : IService<BusinessDirectory, Guid>
+    public interface IDirectoryCategoryService : IService<DirectoryCategory, Guid>
     {
     }
 }

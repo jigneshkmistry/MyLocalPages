@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyLocalPages.Domain.Entities
+namespace MyLocalPages.Domain
 {
     public class BusinessDirectory
     {

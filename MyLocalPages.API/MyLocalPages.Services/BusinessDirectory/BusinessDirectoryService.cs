@@ -1,16 +1,15 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
+using MyLocalPages.Domain;
 
-namespace MyLocalPages.Services.BusinessDirectory
+namespace MyLocalPages.Services
 {
-    public class BusinessDirectoryService : IBusinessDirectoryService
+    public class BusinessDirectoryService : ServiceBase<BusinessDirectory, Guid>, IBusinessDirectoryService
     {
-        private readonly string _mailTo = string.Empty;
-        private readonly string _mailFrom = string.Empty;
-
-        public BusinessDirectoryService(IConfiguration configuration)
+        public BusinessDirectoryService(IBusinessDirectoryRepository businessDirectoryRepository,
+            ILogger<BusinessDirectoryService> logger, IMapper _mapper) : base(businessDirectoryRepository, logger, _mapper)
         {
-            _mailTo = configuration["mailSettings:mailToAddress"];
-            _mailFrom = configuration["mailSettings:mailFromAddress"];
+
         }
     }
 }
