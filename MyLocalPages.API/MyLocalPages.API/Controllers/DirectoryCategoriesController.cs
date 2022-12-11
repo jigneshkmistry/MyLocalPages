@@ -7,6 +7,9 @@ using MyLocalPages.Services;
 
 namespace MyLocalPages.API.Controllers
 {
+    /// <summary>
+    /// DirectoryCategory Controller
+    /// </summary>
     [Route("api/v{version:apiVersion}/BusinessDirectories/{directoryId}/DirectoryCategories")]
     [ApiController]
     [ApiVersion("1.0")]
@@ -39,13 +42,17 @@ namespace MyLocalPages.API.Controllers
 
         #region HTTPGET
 
-        [HttpGet]
         /// <summary>
-        /// Gets the sub categories for a business category  
+        /// Gets the list of DirectoryCategory.
         /// </summary>
-        /// <returns>List of business sub categories</returns>
+        /// <param name="directoryId">id of the BusinessDirectory</param>
+        /// <returns>List of DirectoryCategory</returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<DirectoryCategoryDTO>>> GetDirectoryCategories(Guid directoryId)
         {
+            _logger.LogInformation("GetDirectoryCategories called : ");
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
@@ -56,16 +63,20 @@ namespace MyLocalPages.API.Controllers
             return Ok(categories);
         }
 
-        [HttpGet]
-        [Route("{id}", Name = "GetBusinessCategory")]
         /// <summary>
-        /// get the business sub category info
+        /// Gets the DirectoryCategory info by id.
         /// </summary>
-        /// <param name="id">unique identifier for the sub category</param>
-        /// <returns></returns>
-        public async Task<ActionResult<DirectoryCategoryDTO>> GetBusinessCategory(Guid directoryId, Guid id)
+        /// <param name="directoryId">id of the BusinessDirectory</param>
+        /// <param name="id">id of the DirectoryCategory</param>
+        /// <returns>DirectoryCategory info</returns>
+        [HttpGet]
+        [Route("{id}", Name = "GetDirectoryCategory")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<DirectoryCategoryDTO>> GetDirectoryCategory(Guid directoryId, Guid id)
         {
-
+            _logger.LogInformation("GetDirectoryCategory called : ");
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
@@ -85,15 +96,20 @@ namespace MyLocalPages.API.Controllers
 
         #region HTTPPOST
 
-        [HttpPost]
         /// <summary>
-        /// creates business directory category
+        ///  Creates a DirectoryCategory.
         /// </summary>
-        /// <param name="businessDirectory">BusinessDirectoryCategory creation model</param>
-        /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public async Task<ActionResult<DirectoryCategoryDTO>> CreateBusinessDirectoryCategory(Guid directoryId,
+        /// <param name="directoryId">Id of the BusinessDirectory</param>
+        /// <param name="directoryCategoryForCreationDTO">DirectoryCategory model</param>
+        /// <returns>DirectoryCategory model</returns>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<DirectoryCategoryDTO>> CreateDirectoryCategory(Guid directoryId,
             DirectoryCategoryForCreationDTO directoryCategoryForCreationDTO)
         {
+            _logger.LogInformation("CreateBusinessDirectoryCategory called : ");
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
@@ -102,22 +118,29 @@ namespace MyLocalPages.API.Controllers
             directoryCategoryForCreationDTO.BusinessDirectoryId = directoryId;
             var categoryToReturn = await _directoryCategoryService.
                     CreateEntityAsync<DirectoryCategoryDTO, DirectoryCategoryForCreationDTO>(directoryCategoryForCreationDTO);
-            return CreatedAtRoute("GetBusinessCategory", new { directoryId, categoryToReturn.Id }, categoryToReturn);
+            return CreatedAtRoute("GetDirectoryCategory", new { directoryId, categoryToReturn.Id }, categoryToReturn);
         }
 
         #endregion
 
         #region HTTPPUT
 
-        [HttpPut]
-        [Route("{id}", Name = "GetBusinessCategory")]
         /// <summary>
-        /// updates business directory category
+        /// Updates a DirectoryCategory.
         /// </summary>
-        /// <param name="businessDirectory">BusinessDirectoryCategory update model</param>
-        /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public async Task<ActionResult> UpdateBusinessDirectoryCategory(Guid directoryId, Guid id, DirectoryCategoryForUpdateDTO directoryCategoryForUpdateDTO)
+        /// <param name="directoryId">id of the BusinessDirectory</param>
+        /// <param name="id">id of the DirectoryCategory</param>
+        /// <param name="directoryCategoryForUpdateDTO">DirectoryCategory model</param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("{id}", Name = "UpdateDirectoryCategory")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> UpdateDirectoryCategory(Guid directoryId, Guid id, DirectoryCategoryForUpdateDTO directoryCategoryForUpdateDTO)
         {
+            _logger.LogInformation("UpdateDirectoryCategory called : ");
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
@@ -137,15 +160,22 @@ namespace MyLocalPages.API.Controllers
 
         #region HTTPPATCH
 
-        [HttpPatch]
-        [Route("{id}", Name = "PartiallyUpdateBusinessDirectoryCategory")]
         /// <summary>
-        /// partially updates business directory category
+        /// Partially updates the DirectoryCategory.
         /// </summary>
-        /// <param name="businessDirectory">BusinessDirectoryCategory update model</param>
-        /// <returns>BusinessDirectoryCategoryResposne Model</returns>
-        public async Task<ActionResult> PartiallyUpdateBusinessDirectoryCategory(Guid directoryId, Guid id, JsonPatchDocument<DirectoryCategoryForUpdateDTO> patchDocument)
+        /// <param name="directoryId">id of the BusinessDirectory</param>
+        /// <param name="id">id of the DirectoryCategory</param>
+        /// <param name="patchDocument">patchDocument for DirectoryCategory</param>
+        /// <returns></returns>
+        [HttpPatch]
+        [Route("{id}", Name = "PartiallyUpdateDirectoryCategory")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> PartiallyUpdateDirectoryCategory(Guid directoryId, Guid id, JsonPatchDocument<DirectoryCategoryForUpdateDTO> patchDocument)
         {
+            _logger.LogInformation("PartiallyUpdateDirectoryCategory called : ");
             DirectoryCategoryForUpdateDTO dto = new DirectoryCategoryForUpdateDTO();
             DirectoryCategory category = new DirectoryCategory();
 
@@ -171,12 +201,10 @@ namespace MyLocalPages.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            //map the changes from dto to entity.
             _mapper.Map(dto, category);
 
             category.Id = id;
 
-            //partially update the changes to the db. 
             await _directoryCategoryService.UpdatePartialEntityAsync(category, patchDocument);
 
             return NoContent();
@@ -187,14 +215,18 @@ namespace MyLocalPages.API.Controllers
         #region HTTPDELETE
 
         /// <summary>
-        /// Deletes the business directory category.
+        /// Deletes the DirectoryCategory.
         /// </summary>
-        /// <param name="directoryId">Unique identifier business directory</param>
-        /// <param name="id">Unique indetifier for directory category</param>
+        /// <param name="directoryId">id of the BusinessDirectory</param>
+        /// <param name="id">id if the DitectoryCategory</param>
         /// <returns></returns>
         [HttpDelete("{id}", Name = "DeleteBusinessDirectoryCategory")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> DeleteBusinessDirectoryCategory(Guid directoryId, Guid id)
         {
+            _logger.LogInformation("DeleteBusinessDirectoryCategory called : ");
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
