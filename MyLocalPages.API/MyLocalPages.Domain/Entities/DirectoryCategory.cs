@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MyLocalPages.Domain
 {
-    public class DirectoryCategory
+    public class DirectoryCategory : AuditableEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

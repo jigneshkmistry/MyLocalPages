@@ -3,11 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MyLocalPages.Domain;
 using AutoMapper;
+using MyLocalPages.DTO;
 
 namespace MyLocalPages.Services
 {
@@ -22,7 +24,6 @@ namespace MyLocalPages.Services
 
         #endregion
 
-
         #region CONSTRUCTOR
 
         public ServiceBase(IRepository<TEntity, TKey> repository, ILogger<ServiceBase<TEntity, TKey>> logger, IMapper mapper)
@@ -33,7 +34,6 @@ namespace MyLocalPages.Services
         }
 
         #endregion
-
 
         #region CRUD METHODS
 
@@ -220,50 +220,50 @@ namespace MyLocalPages.Services
             return await _repository.SaveChangesAsync();
         }
 
-        //public async Task<PagedList<dynamic>> GetFilteredEntities(FilterOptionsModel filterOptionModel)
-        //{
-        //    IQueryable<TEntity> filteredEntities = null;
-        //    IQueryable<TEntity> sortedEntities = null;
-        //    string selectClause = "";
+        public async Task<PagedList<dynamic>> GetFilteredEntities(FilterOptionsModel filterOptionModel)
+        {
+            IQueryable<TEntity> filteredEntities = null;
+            IQueryable<TEntity> sortedEntities = null;
+            string selectClause = "";
 
-        //    //Gets the Entity Queryable.
-        //    IQueryable<TEntity> entityQueryable = _repository.GetFilteredEntities();
+            //Gets the Entity Queryable.
+            IQueryable<TEntity> entityQueryable = _repository.GetFilteredEntities();
 
-        //    //Apply filtering if applicable
-        //    if (!String.IsNullOrEmpty(filterOptionModel.SearchQuery))
-        //    {
-        //        //Apply the filtering expression to the customers Queryable.
-        //        filteredEntities = entityQueryable.Where(filterOptionModel.SearchQuery);
-        //    }
-        //    else
-        //    {
-        //        filteredEntities = entityQueryable;
-        //    }
+            //Apply filtering if applicable
+            if (!String.IsNullOrEmpty(filterOptionModel.SearchQuery))
+            {
+                //Apply the filtering expression to the customers Queryable.
+                filteredEntities = entityQueryable.Where(filterOptionModel.SearchQuery);
+            }
+            else
+            {
+                filteredEntities = entityQueryable;
+            }
 
-        //    if (!String.IsNullOrEmpty(filterOptionModel.OrderBy))
-        //    {
-        //        sortedEntities = ApplySort(filteredEntities,filterOptionModel.OrderBy, GetPropertyMapping());
-        //    }
-        //    else
-        //    {
-        //        sortedEntities = ApplySort(filteredEntities,GetDefaultOrderByColumn(), GetPropertyMapping());
-        //    }
+            if (!String.IsNullOrEmpty(filterOptionModel.OrderBy))
+            {
+                sortedEntities = ApplySort(filteredEntities, filterOptionModel.OrderBy, GetPropertyMapping());
+            }
+            else
+            {
+                sortedEntities = ApplySort(filteredEntities, GetDefaultOrderByColumn(), GetPropertyMapping());
+            }
 
-        //    if (!string.IsNullOrEmpty(filterOptionModel.Fields))
-        //    {
-        //        //Prepare the select clause.
-        //        selectClause = "new (" + filterOptionModel.Fields + " )";
-        //    }
-        //    else
-        //    {
-        //        //Prepare the select clause.
-        //        selectClause = "new (" + GetDefaultFieldsToSelect() + " )";
-        //    }
+            if (!string.IsNullOrEmpty(filterOptionModel.Fields))
+            {
+                //Prepare the select clause.
+                selectClause = "new (" + filterOptionModel.Fields + " )";
+            }
+            else
+            {
+                //Prepare the select clause.
+                selectClause = "new (" + GetDefaultFieldsToSelect() + " )";
+            }
 
-        //    var items = await sortedEntities.Skip((filterOptionModel.PageNumber - 1) * filterOptionModel.PageSize).Take(filterOptionModel.PageSize).Select(selectClause).ToDynamicListAsync();
+            var items = await sortedEntities.Skip((filterOptionModel.PageNumber - 1) * filterOptionModel.PageSize).Take(filterOptionModel.PageSize).Select(selectClause).ToDynamicListAsync();
 
-        //    return new PagedList<dynamic>(items, sortedEntities.Count(), filterOptionModel.PageNumber, filterOptionModel.PageSize);
-        //}
+            return new PagedList<dynamic>(items, sortedEntities.Count(), filterOptionModel.PageNumber, filterOptionModel.PageSize);
+        }
 
 
         #endregion
@@ -273,48 +273,48 @@ namespace MyLocalPages.Services
         #region VIRTUAL METHODS
 
 
-        //public virtual Dictionary<string, PropertyMappingValue> GetPropertyMapping()
-        //{
-        //    return new Dictionary<string, PropertyMappingValue>();
-        //}
+        public virtual Dictionary<string, PropertyMappingValue> GetPropertyMapping()
+        {
+            return new Dictionary<string, PropertyMappingValue>();
+        }
 
-        //public virtual bool ValidMappingExists(string fields)
-        //{
-        //    var propertyMapping = GetPropertyMapping();
+        public virtual bool ValidMappingExists(string? fields)
+        {
+            var propertyMapping = GetPropertyMapping();
 
-        //    if (string.IsNullOrWhiteSpace(fields))
-        //    {
-        //        return true;
-        //    }
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                return true;
+            }
 
-        //    // the string is separated by ",", so we split it.
-        //    var fieldsAfterSplit = fields.Split(',');
+            // the string is separated by ",", so we split it.
+            var fieldsAfterSplit = fields.Split(',');
 
-        //    // run through the fields clauses
-        //    foreach (var field in fieldsAfterSplit)
-        //    {
-        //        // trim
-        //        var trimmedField = field.Trim();
+            // run through the fields clauses
+            foreach (var field in fieldsAfterSplit)
+            {
+                // trim
+                var trimmedField = field.Trim();
 
-        //        // remove everything after the first " " - if the fields 
-        //        // are coming from an orderBy string, this part must be 
-        //        // ignored
-        //        var indexOfFirstSpace = trimmedField.IndexOf(" ");
-        //        var propertyName = indexOfFirstSpace == -1 ?
-        //            trimmedField : trimmedField.Remove(indexOfFirstSpace);
+                // remove everything after the first " " - if the fields 
+                // are coming from an orderBy string, this part must be 
+                // ignored
+                var indexOfFirstSpace = trimmedField.IndexOf(" ");
+                var propertyName = indexOfFirstSpace == -1 ?
+                    trimmedField : trimmedField.Remove(indexOfFirstSpace);
 
-        //        // find the matching property
-        //        if (!propertyMapping.ContainsKey(propertyName))
-        //        {
-        //            return false;
-        //        }
-        //    }
-        //    return true;
-        //}
+                // find the matching property
+                if (!propertyMapping.ContainsKey(propertyName))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
 
         public virtual string GetDefaultOrderByColumn()
         {
-            return "ID";
+            return "Id";
         }
 
         public virtual string GetDefaultFieldsToSelect()
@@ -326,73 +326,73 @@ namespace MyLocalPages.Services
 
         #region PRIVATE METHODS
 
-        //public static IQueryable<T> ApplySort<T>(IQueryable<T> source, string orderBy,
-        //   Dictionary<string, PropertyMappingValue> mappingDictionary)
-        //{
-        //    if (source == null)
-        //    {
-        //        throw new ArgumentNullException("source");
-        //    }
+        public static IQueryable<T> ApplySort<T>(IQueryable<T> source, string orderBy,
+           Dictionary<string, PropertyMappingValue> mappingDictionary)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException("source");
+            }
 
-        //    if (mappingDictionary == null)
-        //    {
-        //        throw new ArgumentNullException("mappingDictionary");
-        //    }
+            if (mappingDictionary == null)
+            {
+                throw new ArgumentNullException("mappingDictionary");
+            }
 
-        //    if (string.IsNullOrWhiteSpace(orderBy))
-        //    {
-        //        return source;
-        //    }
-        //    // the orderBy string is separated by ",", so we split it.
-        //    var orderByAfterSplit = orderBy.Split(',');
+            if (string.IsNullOrWhiteSpace(orderBy))
+            {
+                return source;
+            }
+            // the orderBy string is separated by ",", so we split it.
+            var orderByAfterSplit = orderBy.Split(',');
 
-        //    // apply each orderby clause in reverse order - otherwise, the 
-        //    // IQueryable will be ordered in the wrong order
-        //    foreach (var orderByClause in orderByAfterSplit.Reverse())
-        //    {
-        //        // trim the orderByClause, as it might contain leading 
-        //        // or trailing spaces. Can't trim the var in foreach,
-        //        // so use another var.
-        //        var trimmedOrderByClause = orderByClause.Trim();
+            // apply each orderby clause in reverse order - otherwise, the 
+            // IQueryable will be ordered in the wrong order
+            foreach (var orderByClause in orderByAfterSplit.Reverse())
+            {
+                // trim the orderByClause, as it might contain leading 
+                // or trailing spaces. Can't trim the var in foreach,
+                // so use another var.
+                var trimmedOrderByClause = orderByClause.Trim();
 
-        //        // if the sort option ends with with " desc", we order
-        //        // descending, otherwise ascending
-        //        var orderDescending = trimmedOrderByClause.EndsWith(" desc");
+                // if the sort option ends with with " desc", we order
+                // descending, otherwise ascending
+                var orderDescending = trimmedOrderByClause.EndsWith(" desc");
 
-        //        // remove " asc" or " desc" from the orderByClause, so we 
-        //        // get the property name to look for in the mapping dictionary
-        //        var indexOfFirstSpace = trimmedOrderByClause.IndexOf(" ");
-        //        var propertyName = indexOfFirstSpace == -1 ?
-        //            trimmedOrderByClause : trimmedOrderByClause.Remove(indexOfFirstSpace);
+                // remove " asc" or " desc" from the orderByClause, so we 
+                // get the property name to look for in the mapping dictionary
+                var indexOfFirstSpace = trimmedOrderByClause.IndexOf(" ");
+                var propertyName = indexOfFirstSpace == -1 ?
+                    trimmedOrderByClause : trimmedOrderByClause.Remove(indexOfFirstSpace);
 
-        //        // find the matching property
-        //        if (!mappingDictionary.ContainsKey(propertyName))
-        //        {
-        //            throw new ArgumentException($"Key mapping for {propertyName} is missing");
-        //        }
+                // find the matching property
+                if (!mappingDictionary.ContainsKey(propertyName))
+                {
+                    throw new ArgumentException($"Key mapping for {propertyName} is missing");
+                }
 
-        //        // get the PropertyMappingValue
-        //        var propertyMappingValue = mappingDictionary[propertyName];
+                // get the PropertyMappingValue
+                var propertyMappingValue = mappingDictionary[propertyName];
 
-        //        if (propertyMappingValue == null)
-        //        {
-        //            throw new ArgumentNullException("propertyMappingValue");
-        //        }
+                if (propertyMappingValue == null)
+                {
+                    throw new ArgumentNullException("propertyMappingValue");
+                }
 
-        //        // Run through the property names in reverse
-        //        // so the orderby clauses are applied in the correct order
-        //        foreach (var destinationProperty in propertyMappingValue.DestinationProperties.Reverse())
-        //        {
-        //            // revert sort order if necessary
-        //            if (propertyMappingValue.Revert)
-        //            {
-        //                orderDescending = !orderDescending;
-        //            }
-        //            source = source.OrderBy(destinationProperty + (orderDescending ? " descending" : " ascending"));
-        //        }
-        //    }
-        //    return source;
-        //}
+                // Run through the property names in reverse
+                // so the orderby clauses are applied in the correct order
+                foreach (var destinationProperty in propertyMappingValue.DestinationProperties.Reverse())
+                {
+                    // revert sort order if necessary
+                    if (propertyMappingValue.Revert)
+                    {
+                        orderDescending = !orderDescending;
+                    }
+                    source = source.OrderBy(destinationProperty + (orderDescending ? " descending" : " ascending"));
+                }
+            }
+            return source;
+        }
 
         #endregion
 

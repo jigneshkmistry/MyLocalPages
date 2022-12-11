@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using MyLocalPages.Domain;
 using MyLocalPages.DTO;
 using MyLocalPages.Services;
+using MyLocalPages.Utils;
+using Newtonsoft.Json;
 
 namespace MyLocalPages.API.Controllers
 {
@@ -47,20 +49,54 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="directoryId">id of the BusinessDirectory</param>
         /// <returns>List of DirectoryCategory</returns>
-        [HttpGet]
+        [HttpGet(Name = "GetFilteredDirectoryCategories")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<DirectoryCategoryDTO>>> GetDirectoryCategories(Guid directoryId)
+        public async Task<ActionResult<IEnumerable<DirectoryCategoryDTO>>> GetFilteredDirectoryCategories(Guid directoryId, [FromQuery] FilterOptionsModel filterOptionsModel)
         {
             _logger.LogInformation("GetDirectoryCategories called : ");
+
+            if (!_directoryCategoryService.ValidMappingExists(filterOptionsModel.OrderBy))
+            {
+                return BadRequest();
+            }
+
+            if (!MyLocalPagesUtils.TypeHasProperties<DirectoryCategoryDTO>(filterOptionsModel.Fields))
+            {
+                return BadRequest();
+            }
+
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var categories = _mapper.Map<List<DirectoryCategoryDTO>>((await _directoryCategoryService.GetAllEntitiesAsync()).Where(x => x.BusinessDirectoryId == directoryId));
+            filterOptionsModel.SearchQuery += $"BusinessDirectoryId == \"{directoryId}\"";
+            var directoryCategory = await _directoryCategoryService.GetFilteredEntities(filterOptionsModel);
 
-            return Ok(categories);
+
+            var previousPageLink = directoryCategory.HasPrevious ?
+                   CreateEventsResourceUri(filterOptionsModel, ResourceUriType.PreviousPage) : null;
+
+            var nextPageLink = directoryCategory.HasNext ?
+                CreateEventsResourceUri(filterOptionsModel, ResourceUriType.NextPage) : null;
+
+            //prepare the pagination metadata.
+            var paginationMetadata = new
+            {
+                previousPageLink,
+                nextPageLink,
+                totalCount = directoryCategory.TotalCount,
+                pageSize = directoryCategory.PageSize,
+                currentPage = directoryCategory.CurrentPage,
+                totalPages = directoryCategory.TotalPages
+            };
+
+            //add pagination meta data to response header.
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationMetadata));
+
+            return Ok(directoryCategory);
         }
 
         /// <summary>
@@ -68,28 +104,44 @@ namespace MyLocalPages.API.Controllers
         /// </summary>
         /// <param name="directoryId">id of the BusinessDirectory</param>
         /// <param name="id">id of the DirectoryCategory</param>
+        /// <param name="fields">comma seperated fields to return for the DirectoryCategory</param>
         /// <returns>DirectoryCategory info</returns>
         [HttpGet]
         [Route("{id}", Name = "GetDirectoryCategory")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<DirectoryCategoryDTO>> GetDirectoryCategory(Guid directoryId, Guid id)
+        public async Task<ActionResult<DirectoryCategoryDTO>> GetDirectoryCategory(Guid directoryId, Guid id, string? fields)
         {
             _logger.LogInformation("GetDirectoryCategory called : ");
+            object directoryCategory;
+
+            if (!MyLocalPagesUtils.TypeHasProperties<DirectoryCategoryDTO>(fields))
+            {
+                return BadRequest();
+            }
+
             if (!await _businessDirectoryService.ExistAsync(x => x.Id == directoryId))
             {
                 return NotFound();
             }
 
-            var category = _mapper.Map<DirectoryCategoryDTO>(await _directoryCategoryService.GetEntityByIdAsync(id));
-
-            if (category == null)
+            if (string.IsNullOrEmpty(fields))
+            {
+                directoryCategory = _mapper.Map<DirectoryCategoryDTO>(await _directoryCategoryService.GetEntityByIdAsync(id));
+            }
+            else
+            {
+                directoryCategory = await _directoryCategoryService.GetPartialEntityAsync(id, fields);
+            }
+               
+            if (directoryCategory == null)
             {
                 return NotFound();
             }
 
-            return Ok(category);
+            return Ok(directoryCategory);
         }
 
         #endregion
@@ -248,5 +300,46 @@ namespace MyLocalPages.API.Controllers
 
         #endregion
 
+        #region PRIVATE METHODS
+
+        private string CreateEventsResourceUri(FilterOptionsModel filterOptionsModel, ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+                    return Url.Link("GetFilteredDirectoryCategories",
+                      new
+                      {
+                          fields = filterOptionsModel.Fields,
+                          orderBy = filterOptionsModel.OrderBy,
+                          searchQuery = filterOptionsModel.SearchQuery,
+                          pageNumber = filterOptionsModel.PageNumber - 1,
+                          pageSize = filterOptionsModel.PageSize
+                      })!;
+                case ResourceUriType.NextPage:
+                    return Url.Link("GetFilteredDirectoryCategories",
+                      new
+                      {
+                          fields = filterOptionsModel.Fields,
+                          orderBy = filterOptionsModel.OrderBy!,
+                          searchQuery = filterOptionsModel.SearchQuery!,
+                          pageNumber = filterOptionsModel.PageNumber + 1,
+                          pageSize = filterOptionsModel.PageSize
+                      })!;
+
+                default:
+                    return Url.Link("GetFilteredDirectoryCategories",
+                    new
+                    {
+                        fields = filterOptionsModel.Fields,
+                        orderBy = filterOptionsModel.OrderBy,
+                        searchQuery = filterOptionsModel.SearchQuery,
+                        pageNumber = filterOptionsModel.PageNumber,
+                        pageSize = filterOptionsModel.PageSize
+                    })!;
+            }
+        }
+
+        #endregion
     }
 }

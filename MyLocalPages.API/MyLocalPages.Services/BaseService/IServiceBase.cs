@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.JsonPatch;
+using MyLocalPages.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -41,7 +42,7 @@ namespace MyLocalPages.Services
 
         bool SaveChanges();
 
-        //Task<PagedList<dynamic>> GetFilteredEntities(FilterOptionsModel filterOptionModel);
+        Task<PagedList<dynamic>> GetFilteredEntities(FilterOptionsModel filterOptionModel);
 
         #endregion
 
@@ -75,7 +76,7 @@ namespace MyLocalPages.Services
 
         #endregion
 
-        //bool ValidMappingExists(string fields);
+        bool ValidMappingExists(string? fields);
 
         #endregion
     }

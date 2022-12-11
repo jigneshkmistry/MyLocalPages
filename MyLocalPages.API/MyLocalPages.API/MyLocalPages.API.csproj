@@ -29,6 +29,7 @@
     <ProjectReference Include="..\MyLocalPages.DTO\MyLocalPages.DTO.csproj" />
     <ProjectReference Include="..\MyLocalPages.Repository\MyLocalPages.Repository.csproj" />
     <ProjectReference Include="..\MyLocalPages.Services\MyLocalPages.Services.csproj" />
+    <ProjectReference Include="..\MyLocalPages.Utils\MyLocalPages.Utils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

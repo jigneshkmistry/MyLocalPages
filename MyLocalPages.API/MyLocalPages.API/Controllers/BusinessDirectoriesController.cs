@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using MyLocalPages.Domain;
 using MyLocalPages.DTO;
 using MyLocalPages.Services;
+using MyLocalPages.Utils;
+using Newtonsoft.Json;
 
 namespace MyLocalPages.API.Controllers
 {
@@ -26,7 +28,7 @@ namespace MyLocalPages.API.Controllers
 
         #region CONSTRUCTOR
 
-        public BusinessDirectoriesController(ILogger<BusinessDirectoriesController> logger,
+        public BusinessDirectoriesController(ILogger<BusinessDirectoriesController> logger,         
             IBusinessDirectoryService businessDirectoryService,
             IMapper mapper)
         {
@@ -43,29 +45,81 @@ namespace MyLocalPages.API.Controllers
         /// Gets the list of BusinessDirectory. 
         /// </summary>
         /// <returns>List of BusinessDirectories</returns>
-        [HttpGet]
+        [HttpGet(Name = "GetFilteredBusinessDirectories")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetBusinessDirectories()
+        public async Task<IActionResult> GetFilteredBusinessDirectories([FromQuery] FilterOptionsModel filterOptionsModel)
         {
-            _logger.LogInformation("GetBusinessDirectories called : ");
-            return Ok(await _businessDirectoryService.GetAllEntitiesAsync());
+            _logger.LogInformation("GetFilteredBusinessDirectories called : ");
+
+            if (!_businessDirectoryService.ValidMappingExists(filterOptionsModel.OrderBy))
+            {               
+                return BadRequest();
+            }
+
+            if (!MyLocalPagesUtils.TypeHasProperties<BusinessDirectoryDTO>(filterOptionsModel.Fields))
+            {              
+                return BadRequest();
+            }
+
+            //get the paged/filtered show from db. 
+            var businessDirectories = await _businessDirectoryService.GetFilteredEntities(filterOptionsModel);
+
+            var previousPageLink = businessDirectories.HasPrevious ?
+                   CreateEventsResourceUri(filterOptionsModel, ResourceUriType.PreviousPage) : null;
+
+            var nextPageLink = businessDirectories.HasNext ?
+                CreateEventsResourceUri(filterOptionsModel, ResourceUriType.NextPage) : null;
+
+            //prepare the pagination metadata.
+            var paginationMetadata = new
+            {
+                previousPageLink,
+                nextPageLink,
+                totalCount = businessDirectories.TotalCount,
+                pageSize = businessDirectories.PageSize,
+                currentPage = businessDirectories.CurrentPage,
+                totalPages = businessDirectories.TotalPages
+            };
+
+            //add pagination meta data to response header.
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationMetadata));
+
+            return Ok(businessDirectories);
         }
 
         /// <summary>
         /// Gets the BusinessDirectory info by id.
         /// </summary>
         /// <param name="id">id of the BusinessDirectory</param>
+        /// <param name="fields">comma seperated fields to return for the BusinessDirectory</param>
         /// <returns>BusinessDirectory info</returns>
         [HttpGet]
         [Route("{id}", Name = "GetBusinessDirectory")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<DirectoryCategoryDTO>> GetBusinessDirectory(Guid id)
+        public async Task<ActionResult<DirectoryCategoryDTO>> GetBusinessDirectory(Guid id,string? fields)
         {
             _logger.LogInformation("GetBusinessDirectory called : ");
-            var businessDirectory = _mapper.Map<BusinessDirectoryDTO>(await _businessDirectoryService.GetEntityByIdAsync(id));
+            object businessDirectory;
+
+            if (!MyLocalPagesUtils.TypeHasProperties<BusinessDirectoryDTO>(fields))
+            {               
+                return BadRequest();
+            }
+
+            if (string.IsNullOrEmpty(fields))
+            {
+                _logger.LogInformation("GetEvent called");
+                businessDirectory = _mapper.Map<BusinessDirectoryDTO>(await _businessDirectoryService.GetEntityByIdAsync(id));
+            }
+            else
+            {
+                businessDirectory = await _businessDirectoryService.GetPartialEntityAsync(id, fields);
+            }
 
             if (businessDirectory == null)
             {
@@ -206,6 +260,48 @@ namespace MyLocalPages.API.Controllers
             }
            
             return NoContent();
+        }
+
+        #endregion
+
+        #region PRIVATE METHODS
+
+        private string CreateEventsResourceUri(FilterOptionsModel filterOptionsModel, ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+                    return Url.Link("GetFilteredBusinessDirectories",
+                      new
+                      {
+                          fields = filterOptionsModel.Fields,
+                          orderBy = filterOptionsModel.OrderBy,
+                          searchQuery = filterOptionsModel.SearchQuery,
+                          pageNumber = filterOptionsModel.PageNumber - 1,
+                          pageSize = filterOptionsModel.PageSize
+                      })!;
+                case ResourceUriType.NextPage:
+                    return Url.Link("GetFilteredBusinessDirectories",
+                      new
+                      {
+                          fields = filterOptionsModel.Fields,
+                          orderBy = filterOptionsModel.OrderBy!,
+                          searchQuery = filterOptionsModel.SearchQuery!,
+                          pageNumber = filterOptionsModel.PageNumber + 1,
+                          pageSize = filterOptionsModel.PageSize
+                      })!;
+
+                default:
+                    return Url.Link("GetFilteredBusinessDirectories",
+                    new
+                    {
+                        fields = filterOptionsModel.Fields,
+                        orderBy = filterOptionsModel.OrderBy,
+                        searchQuery = filterOptionsModel.SearchQuery,
+                        pageNumber = filterOptionsModel.PageNumber,
+                        pageSize = filterOptionsModel.PageSize
+                    })!;
+            }
         }
 
         #endregion

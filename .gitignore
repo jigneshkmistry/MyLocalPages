@@ -20,3 +20,5 @@
 /MyLocalPages.API/MyLocalPages.Repository/obj
 /MyLocalPages.API/MyLocalPages.API/MyLocalPages.db-wal
 /MyLocalPages.API/MyLocalPages.API/MyLocalPages.db-shm
+/MyLocalPages.API/MyLocalPages.Utils/bin/Debug/net6.0
+/MyLocalPages.API/MyLocalPages.Utils/obj

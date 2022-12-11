@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MyLocalPages.Domain
 {
-    public class BusinessDirectory
+    public class BusinessDirectory : AuditableEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
