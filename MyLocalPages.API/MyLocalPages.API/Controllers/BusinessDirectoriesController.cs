@@ -7,8 +7,9 @@ using MyLocalPages.Services;
 
 namespace MyLocalPages.API.Controllers
 {
-    [Route("api/BusinessDirectories")]
+    [Route("api/v{version:apiVersion}/BusinessDirectories")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class BusinessDirectoriesController : ControllerBase
     {
 
@@ -40,7 +41,7 @@ namespace MyLocalPages.API.Controllers
         /// Gets the business directories 
         /// </summary>
         /// <returns>List of business directories</returns>
-        public async Task<ActionResult<IEnumerable<BusinessDirectory>>> GetBusinessDirectories()
+        public async Task<IActionResult> GetBusinessDirectories()
         {
             _logger.LogInformation("GetBusinessDirectories called : ");
             return Ok(await _businessDirectoryService.GetAllEntitiesAsync());

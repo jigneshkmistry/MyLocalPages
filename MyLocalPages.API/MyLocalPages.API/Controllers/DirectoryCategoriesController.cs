@@ -7,8 +7,9 @@ using MyLocalPages.Services;
 
 namespace MyLocalPages.API.Controllers
 {
-    [Route("api/BusinessDirectories/{directoryId}/DirectoryCategories")]
+    [Route("api/v{version:apiVersion}/BusinessDirectories/{directoryId}/DirectoryCategories")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class DirectoryCategoriesController : ControllerBase
     {
 
